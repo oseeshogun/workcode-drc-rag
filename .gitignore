@@ -1,0 +1,113 @@
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+!.env.example
+*.secrets.*
+*.key
+*.pem
+*.p12
+*.pfx
+
+# =========================
+# Python artifacts
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+build/
+dist/
+develop-eggs/
+downloads/
+sdist/
+wheels/
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+.python-version
+
+# Packaging / tooling caches
+.pip-cache/
+pip-log.txt
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.pytype/
+.pyre/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+.nox/
+.tox/
+
+# =========================
+# IDE / editor
+# =========================
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =========================
+# Jupyter / notebooks
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# FastAPI / ASGI server
+# =========================
+# Uvicorn / Gunicorn logs & PID files
+*.log
+*.pid
+
+# If you store runtime data locally (adjust if you use these)
+logs/
+tmp/
+
+# =========================
+# Database / local data
+# =========================
+*.sqlite
+*.sqlite3
+*.db
+
+# =========================
+# Documentation builds
+# =========================
+site/
+docs/_build/
+
+# =========================
+# TypeScript/Frontend (if present)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.tmp
