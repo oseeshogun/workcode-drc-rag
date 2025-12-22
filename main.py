@@ -1,15 +1,27 @@
 import json
+import os
 from enum import Enum
 from functools import lru_cache
 from typing import Annotated, Any, Dict, List, Optional
 
-from fastapi import Body, FastAPI, Request
+from dotenv import load_dotenv
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from pydantic import BaseModel, Field
 
 from agent import agent
 from agent.model import model
 from config import Settings
+
+load_dotenv()
+
+CREDENTIALS_FILE = os.environ.get(
+    "GOOGLE_APPLICATION_CREDENTIALS", "work-code-service-account.json"
+)
+SCOPES = ["www.googleapis.com"]
 
 
 @lru_cache(maxsize=1)
@@ -28,6 +40,67 @@ app = FastAPI()
 @app.get("/health")
 def read_health():
     return {"status": "ok"}
+
+
+@app.post("/verify-integrity")
+async def verify_integrity(token_data: dict):
+    integrity_token = token_data.get("integrity_token")
+    # In a classic request, the nonce should also be sent from the app and validated here
+    # For standard requests, Google handles nonce validation using the requestHash.
+
+    if not integrity_token:
+        raise HTTPException(status_code=400, detail="Missing integrity token")
+
+    # The package name of your Android app
+    package_name = "com.your.app.packagename"
+
+    try:
+        # Authenticate and build the Play Integrity API service
+        credentials = service_account.Credentials.from_service_account_file(
+            CREDENTIALS_FILE, scopes=SCOPES
+        )
+        service = build("playintegrity", "v1", credentials=credentials)
+
+        # The request body for the decode operation
+        decode_request_body = {"integrity_token": integrity_token}
+
+        # Call the Google API to decode the token
+        request = service.v1().decodeIntegrityToken(
+            packageName=package_name, body=decode_request_body
+        )
+        response = request.execute()
+
+        # Extract the integrity verdict from the response
+        verdict = (
+            response.get("tokenPayloadExternal", {})
+            .get("deviceIntegrity", {})
+            .get("deviceRecognitionVerdict", [])
+        )
+
+        # Implement your anti-abuse logic
+        if "MEETS_DEVICE_INTEGRITY" in verdict:
+            # Device is genuine, proceed with sensitive action
+            return {
+                "status": "success",
+                "message": "Integrity check passed",
+                "verdict": response,
+            }
+        else:
+            # Device is potentially compromised or an emulator
+            return {
+                "status": "failure",
+                "message": "Device integrity compromised",
+                "verdict": response,
+            }
+
+    except HttpError as e:
+        raise HTTPException(
+            status_code=500, detail=f"Google API error: {e.content.decode()}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+        )
 
 
 def _sse_event(data: Dict[str, Any], event: Optional[str] = None) -> str:
@@ -80,7 +153,12 @@ async def chat_stream(request: Request, body: Annotated[ChatBody, Body()]):
     def event_iter():
         try:
             # `agent.stream()` has a stricter typed input; at runtime it accepts the dict state.
-            stream_input: Any = {"messages": [dict(role=message.role, content=message.content) for message in messages]}
+            stream_input: Any = {
+                "messages": [
+                    dict(role=message.role, content=message.content)
+                    for message in messages
+                ]
+            }
             for event in agent.stream(stream_input, stream_mode="values"):
                 # `Request.is_disconnected()` is async; this generator is sync (used by `StreamingResponse`),
                 # so we can't await it here. If the client disconnects, the server will typically cancel
