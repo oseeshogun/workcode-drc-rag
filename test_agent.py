@@ -1,6 +1,6 @@
 from agent import agent
 
-query = "Que dit l'article 41 du code du travail ?"
+query = "Lis moi l'article 152?"
 
 for event in agent.stream(
     {"messages": [{"role": "user", "content": query}]},

@@ -1,7 +1,8 @@
 from langchain.agents import create_agent
 
+from agent.agent_tools.retrieve_context import retrieve_context
+
 from .model import model
-from .retrieve_context import retrieve_context
 
 tools = [retrieve_context]
 # If desired, specify custom instructions

@@ -1,6 +1,7 @@
 from langchain.tools import tool
 
-from .splitter import vector_store
+from agent.vector_store import vector_store
+
 
 @tool(response_format="content_and_artifact")
 def retrieve_context(query: str):
@@ -10,4 +11,5 @@ def retrieve_context(query: str):
         (f"Source: {doc.metadata}\nContent: {doc.page_content}")
         for doc in retrieved_docs
     )
+    print(retrieved_docs)
     return serialized, retrieved_docs
