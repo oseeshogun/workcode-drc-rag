@@ -2,11 +2,12 @@ import json
 from enum import Enum
 from typing import Annotated, Any, Dict, List, Optional
 
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from agent import agent
+from app.services.verify_app_check_token import verify_app_check_token_safe
 
 router = APIRouter(
     prefix="/agent",
@@ -41,8 +42,22 @@ class ChatBody(BaseModel):
     )
 
 
+def _verify_app_check(request: Request) -> None:
+    token = request.headers.get("X-Firebase-AppCheck")
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing App Check token")
+
+    decoded = verify_app_check_token_safe(token)
+    if not decoded:
+        raise HTTPException(status_code=401, detail="Invalid App Check token")
+
+
 @router.post("/chat/stream")
-async def chat_stream(request: Request, body: Annotated[ChatBody, Body()]):
+async def chat_stream(
+    request: Request,
+    body: Annotated[ChatBody, Body()],
+    _: Annotated[None, Depends(_verify_app_check)],
+):
     def event_iter():
         stream_input: Any = {
             "messages": [
