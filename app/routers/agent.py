@@ -76,10 +76,32 @@ async def chat_stream(
             content = getattr(last, "content", None) or (
                 last.get("content") if isinstance(last, dict) else None
             )
-            if content:
-                yield _sse_event({"token": content}, event="token")
+            response_metadata = getattr(last, "response_metadata", None) or (
+                last.get("response_metadata") if isinstance(last, dict) else None
+            )
 
-        yield _sse_event({"status": "done"}, event="done")
+            usage_metadata = getattr(last, "usage_metadata", None) or (
+                last.get("usage_metadata") if isinstance(last, dict) else None
+            )
+
+            if content:
+                yield _sse_event(
+                    {
+                        "token": content,
+                        "model_name": response_metadata.get("model_name", None)
+                        if response_metadata
+                        else None,
+                        "model_provider": response_metadata.get("model_provider", None)
+                        if response_metadata
+                        else None,
+                        "total_tokens": usage_metadata.get("total_tokens", None)
+                        if usage_metadata
+                        else None,
+                    },
+                    event="token",
+                )
+
+        yield _sse_event({"token": "done"}, event="done")
 
     return StreamingResponse(
         event_iter(),
