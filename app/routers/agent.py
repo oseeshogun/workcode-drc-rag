@@ -19,8 +19,8 @@ router = APIRouter(
 def _sse_event(data: Dict[str, Any], event: Optional[str] = None) -> str:
     payload = json.dumps(data, ensure_ascii=False)
     if event:
-        return f"event: {event}\ndata: {payload}\n\n"
-    return f"data: {payload}\nevent: \n\n"
+        return json.dumps({"event": event, "data": payload})
+    return json.dumps({"data": payload})
 
 
 class UserRole(str, Enum):
@@ -83,7 +83,7 @@ async def chat_stream(
 
     return StreamingResponse(
         event_iter(),
-        media_type="text/event-stream",
+        media_type="json/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
