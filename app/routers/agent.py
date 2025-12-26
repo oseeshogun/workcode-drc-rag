@@ -66,8 +66,9 @@ async def chat_stream(
             ]
         }
 
-        for event in agent.stream(stream_input, stream_mode="values"):
-            msgs = event.get("messages") if isinstance(event, dict) else None
+        for event in agent.stream(stream_input, stream_mode="updates"):
+            model = event.get("model")
+            msgs = model.get("messages") if isinstance(model, dict) else None
 
             if not msgs:
                 continue
