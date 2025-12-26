@@ -56,7 +56,7 @@ def _verify_app_check(request: Request) -> None:
 async def chat_stream(
     request: Request,
     body: Annotated[ChatBody, Body()],
-    _: Annotated[None, Depends(_verify_app_check)],
+    # _: Annotated[None, Depends(_verify_app_check)],
 ):
     def event_iter():
         stream_input: Any = {
@@ -66,13 +66,15 @@ async def chat_stream(
             ]
         }
 
-        for event in agent.stream(stream_input, stream_mode="values"):
-            msgs = event.get("messages") if isinstance(event, dict) else None
+        for event in agent.stream(stream_input, stream_mode="updates"):
+            model = event.get("model") if isinstance(event, dict) else None
+            msgs = model.get("messages") if isinstance(model, dict) else None
 
             if not msgs:
                 continue
 
             last = msgs[-1]
+            print(last)
             content = getattr(last, "content", None) or (
                 last.get("content") if isinstance(last, dict) else None
             )
