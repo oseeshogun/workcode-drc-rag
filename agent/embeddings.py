@@ -3,6 +3,4 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 load_dotenv()
 
-embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/text-multilingual-embedding-002"
-)
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
